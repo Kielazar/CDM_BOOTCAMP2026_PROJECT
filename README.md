@@ -1,42 +1,22 @@
-![](../../workflows/gds/badge.svg) ![](../../workflows/docs/badge.svg) ![](../../workflows/test/badge.svg) ![](../../workflows/fpga/badge.svg)
+## TV Static / No Signal — VGA Playground Verilog Design
 
-# Tiny Tapeout Verilog Project Template
+A small Verilog project for the Tiny Tapeout VGA Playground that generates a classic "no signal" TV static effect — full-screen random noise with subtle CRT-style scanline shading, rendered live on the VGA output.
 
-- [Read the documentation for project](docs/info.md)
-
-## What is Tiny Tapeout?
-
-Tiny Tapeout is an educational project that aims to make it easier and cheaper than ever to get your digital and analog designs manufactured on a real chip.
-
-To learn more and get started, visit https://tinytapeout.com.
-
-## Set up your Verilog project
-
-1. Add your Verilog files to the `src` folder.
-2. Edit the [info.yaml](info.yaml) and update information about your project, paying special attention to the `source_files` and `top_module` properties. If you are upgrading an existing Tiny Tapeout project, check out our [online info.yaml migration tool](https://tinytapeout.github.io/tt-yaml-upgrade-tool/).
-3. Edit [docs/info.md](docs/info.md) and add a description of your project.
-4. Adapt the testbench to your design. See [test/README.md](test/README.md) for more information.
-
-The GitHub action will automatically build the ASIC files using [LibreLane](https://www.zerotoasiccourse.com/terminology/librelane/).
-
-## Enable GitHub actions to build the results page
-
-- [Enabling GitHub Pages](https://tinytapeout.com/faq/#my-github-action-is-failing-on-the-pages-part)
-
-## Resources
-
-- [FAQ](https://tinytapeout.com/faq/)
-- [Digital design lessons](https://tinytapeout.com/digital_design/)
-- [Learn how semiconductors work](https://tinytapeout.com/siliwiz/)
-- [Join the community](https://tinytapeout.com/discord)
-- [Build your design locally](https://www.tinytapeout.com/guides/local-hardening/)
-
-## What next?
-
-- [Submit your design to the next shuttle](https://app.tinytapeout.com/).
-- Edit [this README](README.md) and explain your design, how it works, and how to test it.
-- Share your project on your social network of choice:
-  - LinkedIn [#tinytapeout](https://www.linkedin.com/search/results/content/?keywords=%23tinytapeout) [@TinyTapeout](https://www.linkedin.com/company/100708654/)
-  - Mastodon [#tinytapeout](https://chaos.social/tags/tinytapeout) [@matthewvenn](https://chaos.social/@matthewvenn)
-  - X (formerly Twitter) [#tinytapeout](https://twitter.com/hashtag/tinytapeout) [@tinytapeout](https://twitter.com/tinytapeout)
-  - Bluesky [@tinytapeout.com](https://bsky.app/profile/tinytapeout.com)
+# What it does
+Fills the entire visible screen with pseudo-random grayscale noise every clock cycle, mimicking analog TV static.
+Darkens every other scanline slightly, giving it a subtle rolling/CRT look.
+Since red, green, and blue are all driven by the same noise value, the output is grayscale snow — just like a real "no signal" screen — rather than colored noise.
+Runs entirely on digital logic: a 24-bit LFSR (linear feedback shift register) generates the randomness, with no external RNG, ROM, or memory needed.
+# How it works
+A 24-bit LFSR is advanced by one bit every clock cycle. Its feedback taps (bits 23, 22, 21, and 16) are XORed together and fed back into the register, which is the standard way to build a simple hardware pseudo-random sequence.
+The lowest 2 bits of the LFSR (lfsr[1:0]) are used directly as a 2-bit grayscale "noise" value for each pixel, giving 4 shades of gray.
+On odd scanlines (pix_y[0] == 1), the noise value is right-shifted by one bit, halving its brightness — this creates the faint horizontal banding you'd see on an old analog CRT.
+The hvsync_generator module (already provided by the VGA Playground template) handles all horizontal/vertical sync timing and tells the design which pixel is currently being drawn (pix_x, pix_y) and whether it's within the visible display area (video_active).
+# Files
+project.v — the full design (paste this into the playground's project.v tab)
+# How to run it on VGA Playground
+Go to the Tiny Tapeout VGA Playground.
+Open the project.v tab in the editor.
+Delete any existing example code and paste in the full contents of this project's project.v.
+The simulator should compile automatically and start rendering. You should immediately see a full-screen field of black/gray/white static, with faint horizontal banding.
+No input switches or buttons are required — the effect runs and updates continuously as soon as the design starts.
